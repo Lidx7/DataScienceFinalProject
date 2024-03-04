@@ -1,9 +1,8 @@
-import pandas as pd
 import numpy as np
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.model_selection import train_test_split
+from collections import Counter
+import pandas as pd
 from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 
 
@@ -11,52 +10,86 @@ class KNNClassifier:
     def __init__(self, file_path, k=5):
         self.file_path = file_path
         self.k = k
-        self.knn = None
-        self.scaler = StandardScaler()
-        self.imputer = SimpleImputer(strategy='mean')
+        self.data = None
+        self.X_train = None
+        self.X_test = None
+        self.y_train = None
+        self.y_test = None
 
     def load_dataset(self):
         # Load the dataset
-        data = pd.read_csv(self.file_path)
-        return data
+        self.data = pd.read_csv(self.file_path)
 
-    def preprocess_data(self, data):
+    def preprocess_data(self, test_size=0.2, random_state=42):
         # Separate features and target variable
-        X = data.drop(columns=['fetal_health'])
-        y = data['fetal_health']
+        X = self.data.drop(columns=['fetal_health'])
+        y = self.data['fetal_health']
 
-        # Impute missing values
-        X_imputed = self.imputer.fit_transform(X)
+        # Impute missing values with mean
+        imputer = SimpleImputer(strategy='mean')
+        X_imputed = imputer.fit_transform(X)
 
-        # Scale features
-        X_scaled = self.scaler.fit_transform(X_imputed)
+        # Split the data into train and test sets
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_imputed, y, test_size=test_size,
+                                                                                random_state=random_state)
 
-        # Encode target variable
-        label_encoder = LabelEncoder()
-        y_encoded = label_encoder.fit_transform(y)
+        # Reset indices of y_train
+        self.y_train = self.y_train.reset_index(drop=True)
 
-        return X_scaled, y_encoded
+    def euclidean_distance(self, x1, x2):
+        # Convert x1 and x2 to numpy arrays if they are not already
+        x1 = np.array(x1)
+        x2 = np.array(x2)
 
-    def fit(self, X_train, y_train):
-        # Initialize and fit the kNN classifier
-        self.knn = KNeighborsClassifier(n_neighbors=self.k)
-        self.knn.fit(X_train, y_train)
+        # Ensure x1 and x2 have compatible shapes
+        if x1.shape != x2.shape:
+            raise ValueError("Shapes of x1 and x2 must be the same.")
+
+        # Compute the Euclidean distance
+        return np.linalg.norm(x1 - x2)
+
+    def fit(self):
+        pass  # KNN does not require explicit training step
 
     def predict(self, X_test):
-        # Make predictions
-        return self.knn.predict(X_test)
+        predictions = [self._predict(x) for x in X_test]
+        return np.array(predictions)
 
-    def evaluate(self, X_test, y_test):
-        # Make predictions
-        y_pred = self.predict(X_test)
+    def _predict(self, x):
+        # Convert the input data to numpy array
+        x = np.array(x)
+        # Reshape the input data to ensure it's in the right format
+        x_reshaped = x.reshape(1, -1)
+        # Compute distances between x and all examples in the training set
+        distances = [self.euclidean_distance(x_reshaped, x_train.reshape(1, -1)) for x_train in self.X_train]
+        # Sort by distance and return indices of the first k neighbors
+        k_indices = np.argsort(distances)[:self.k]
+        # Extract the labels of the k nearest neighbor training samples
+        k_nearest_labels = [self.y_train[i] for i in k_indices]
+        # Return the most common class label
+        most_common = Counter(k_nearest_labels).most_common(1)
+        return most_common[0][0]
 
-        # Evaluate the algorithm's performance
-        accuracy = accuracy_score(y_test, y_pred)
-        report = classification_report(y_test, y_pred, output_dict=True)
+    def evaluate(self, X_train, y_train):
+        # Convert input features to numpy array
+        X_train = np.array(X_train)
 
-        # Print the evaluation metrics
+        # Make predictions on training set
+        y_train_pred = self.predict(X_train)
+
+        # Convert y_train to a numpy array if it's a pandas series
+        if isinstance(y_train, pd.Series):
+            y_train = y_train.values
+
+        # Handle NaN values in y_true
+        y_train = np.nan_to_num(y_train, nan=np.nanmedian(y_train))  # Replace NaN values with the median
+
+        # Calculate accuracy and classification report
+        accuracy = accuracy_score(y_train, y_train_pred)
+        report = classification_report(y_train, y_train_pred, output_dict=True)
+
+        # Print results for training set
         print("Accuracy:", accuracy)
         print("Recall:", report['macro avg']['recall'])
         print("Precision:", report['macro avg']['precision'])
         print("F1-score:", report['macro avg']['f1-score'])
-
