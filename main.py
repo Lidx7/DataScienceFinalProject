@@ -7,7 +7,7 @@ from KNNClassifier import KNNClassifier
 def main():
     # Load the dataset
     file_path = "fetal_health.csv"
-    knn_classifier = KNNClassifier(file_path=file_path, k=20)
+    knn_classifier = KNNClassifier(file_path=file_path, k=4)
 
     # Load and preprocess the data
     knn_classifier.load_dataset()
@@ -17,9 +17,9 @@ def main():
     X_train, X_test, y_train, y_test = train_test_split(knn_classifier.data.drop(columns=['fetal_health']),
                                                         knn_classifier.data['fetal_health'],
                                                         test_size=0.2, random_state=42)
-    # df = pd.read_csv(file_path)
-    # print(df.info)
-    # print(df.describe(),2)
+    # dataset = pd.read_csv(file_path)
+    # print(dataset.info)
+    # print(dataset.describe(),2)
     # Train the kNN classifier
     knn_classifier.fit()
     print("Results on Training Set:")

@@ -37,13 +37,12 @@ class KNNClassifier:
         self.y_train = self.y_train.reset_index(drop=True)
 
     def euclidean_distance(self, x1, x2):
-        # Convert x1 and x2 to numpy arrays if they are not already
         x1 = np.array(x1)
         x2 = np.array(x2)
 
         # Ensure x1 and x2 have compatible shapes
         if x1.shape != x2.shape:
-            raise ValueError("Shapes of x1 and x2 must be the same.")
+            raise ValueError("Not the same.")
 
         # Compute the Euclidean distance
         return np.linalg.norm(x1 - x2)
