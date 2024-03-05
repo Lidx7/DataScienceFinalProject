@@ -6,22 +6,13 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 class BayesClassifier:
     def __init__(self):
-        # Load the dataset
         self.data = pd.read_csv("spam_dataset.csv")
-
-        # Separate features and labels
         self.X = self.data['text']
         self.y = self.data['label']
-
-        # Splitting the dataset into training and testing sets
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.2, random_state=42)
-
-        # Vectorizing the text data
         self.vectorizer = CountVectorizer()
         self.X_train_vectorized = self.vectorizer.fit_transform(self.X_train)
         self.X_test_vectorized = self.vectorizer.transform(self.X_test)
-
-        # Training the Naive Bayes Classifier
         self.nb_classifier = MultinomialNB()
         self.nb_classifier.fit(self.X_train_vectorized, self.y_train)
 
