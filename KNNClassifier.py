@@ -12,7 +12,7 @@ class KNNClassifier:
     def fit(self, X, y):
         X_vectorized = self.vectorizer.fit_transform(X)
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_vectorized, y, test_size=0.2, random_state=42)
-        self.knn_classifier = KNeighborsClassifier(n_neighbors=self.k, metric = 'minkowski')
+        self.knn_classifier = KNeighborsClassifier(n_neighbors=self.k, metric = 'euclidean')
         self.knn_classifier.fit(self.X_train, self.y_train)
 
     def predict(self):
