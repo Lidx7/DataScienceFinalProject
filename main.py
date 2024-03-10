@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -52,6 +53,7 @@ def KNNPrinter():
     # Visualize confusion matrix for testing set
     plot_confusion_matrix(cm_test, classes=['Not Spam', 'Spam'], title='Confusion Matrix - KNN Classifier (Testing)')
 
+
 def GeneralPrints():
     df = pd.read_csv("spam_dataset.csv")
     print(df.head(3))
@@ -64,6 +66,19 @@ def GeneralPrints():
     print(label_counts)
     plt.pie(label_counts, labels=labels.values(), autopct="%.2f%%")
     plt.show()
+    vectorizer = TfidfVectorizer()
+    X = vectorizer.fit_transform(df['text'])
+    vocabulary = vectorizer.get_feature_names_out()
+    document_index = 0
+    tfidf_scores = X[document_index].toarray().flatten()
+    terms_tfidf_scores = dict(zip(vocabulary, tfidf_scores))
+    top_terms_tfidf_scores = sorted(terms_tfidf_scores.items(), key=lambda x: x[1], reverse=True)[:3]
+    print("Top three TF-IDF scores:")
+    for term, tfidf_score in top_terms_tfidf_scores:
+        print(f"Term: {term}, TF-IDF Score: {tfidf_score}")
+
+    vocabulary_size = len(vectorizer.vocabulary_)
+    print("Number of dimensions in TF-IDF vectors:", vocabulary_size)
 
 def main():
     GeneralPrints()
